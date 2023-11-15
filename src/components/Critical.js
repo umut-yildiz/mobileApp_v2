@@ -15,21 +15,41 @@ import {TextInput} from 'react-native-gesture-handler';
 import pushNotification from './pushNotification';
 import messaging from '@react-native-firebase/messaging';
 
+//  {
+//     "id": 15,
+//     "title": " #1 Dewpoint sensor is broken",
+//     "info": "Please check this component...",
+//     "date": "16/10/23",
+//     "time": "13: 21",
+//     "country": "Turkiye",
+//     "customer": "Customer A",
+//     "site": "Site 1",
+//     "device": "Device A",
+//     "image": "https://marel.com/media/vt2hui0g/industrial-oven-modularoven.jpg",
+//     "icon": "alarm-light",
+//     "color": "#E74C3C"
+// }
+
 const Critical = ({navigation, route}) => {
-  const {item} = route.params;
-  console.log('cemil - navigatedElement:', item);
-
-  useEffect(() => {
-    if (item) {
-      console.log('cemil - item:', item);
-      setListData([...listData, item]);
-    }
-  }, [item]);
-
+  const [listData, setListData] = useState(
+    Critical_Database.map((DatabaseItem, index) => ({
+      key: `${index}`,
+      title: DatabaseItem.title,
+      info: DatabaseItem.info,
+      date: DatabaseItem.date,
+      time: DatabaseItem.time,
+      country: DatabaseItem.country,
+      customer: DatabaseItem.customer,
+      site: DatabaseItem.site,
+      device: DatabaseItem.device,
+      image: DatabaseItem.image,
+    })),
+  );
+  console.log('cemil - listData:', listData);
   const {
     requestUserPermission,
     getFCMToken,
-    listenToBackgroundNotifications,
+    // listenToBackgroundNotifications,
     // listenToForegroundNotifications,
     onNotificationOpenedAppFromBackground,
     onNotificationOpenedAppFromQuit,
@@ -55,36 +75,23 @@ const Critical = ({navigation, route}) => {
 
   const listenToForegroundNotifications = async () => {
     const unsubscribe = messaging().onMessage(async remoteMessage => {
-      setNotificationData(JSON.parse(remoteMessage.notification.body));
-      const test = remoteMessage?.notification?.body;
-      console.log('cemil - JSON.parse', JSON.parse(notificationData));
-      console.log('cemil - listData1:', listData);
-      setListData([...listData, test]);
-      console.log('cemil - listData2:', listData);
-      // console.log('cemil - remoteMessage:', remoteMessage);
-      //   console.log(
-      //     'A new message arrived! (FOREGROUND)',
-      //     JSON.stringify(remoteMessage),
-      //   );
+      const foregroundData = JSON.parse(remoteMessage?.notification?.body);
+      console.log('cemil - foregroundData:', foregroundData);
+      setListData([...listData, foregroundData]);
     });
     return unsubscribe;
   };
 
-  const [listData, setListData] = useState(
-    Critical_Database.map((DatabaseItem, index) => ({
-      key: `${index}`,
-      title: DatabaseItem.title,
-      info: DatabaseItem.info,
-      date: DatabaseItem.date,
-      time: DatabaseItem.time,
-      country: DatabaseItem.country,
-      customer: DatabaseItem.customer,
-      site: DatabaseItem.site,
-      device: DatabaseItem.device,
-      image: DatabaseItem.image,
-    })),
-  );
-  console.log('cemil - listData:', listData);
+  const listenToBackgroundNotifications = async () => {
+    const unsubscribe = messaging().setBackgroundMessageHandler(
+      async remoteMessage => {
+        const backgroundData = JSON.parse(remoteMessage?.notification?.body);
+        setListData([...listData, backgroundData]);
+        console.log('cemil - backgroundData:', backgroundData);
+      },
+    );
+    return unsubscribe;
+  };
 
   const closeRow = (rowMap, rowKey) => {
     if (rowMap[rowKey]) {
